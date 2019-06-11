@@ -777,7 +777,17 @@ def scan_for_configure(dirn):
         add_buildreq("buildreq-php")
 
     count = 0
+    if len(config.cmake_srcdir):
+        cmake_subpkg = config.cmake_srcdir.split('/')[-2]
+        cmake_subpkg_path = os.path.join(dirn, cmake_subpkg)
     for dirpath, _, files in os.walk(dirn):
+        if cmake_subpkg_path:
+            # cmake_basepkg = os.path.basename(dirn).split('-')[0]
+            if (dirpath != dirn) and \
+               (dirpath != cmake_subpkg_path) and \
+               (cmake_subpkg_path != os.path.commonpath([cmake_subpkg_path, dirpath])):
+                continue
+
         default_score = 2 if dirpath == dirn else 1
 
         if any(f.endswith(".go") for f in files):

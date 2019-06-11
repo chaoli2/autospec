@@ -1154,11 +1154,20 @@ class Specfile(object):
         """Write build pattern for python packages using distutils3."""
         self.write_prep()
         self.write_lang_c(export_epoch=True)
+        if len(self.cmake_srcdir):
+            self._write_strip("mkdir -p clr-build")
+            self._write_strip("pushd clr-build")
+
         self.write_variables()
         self._write_strip("export MAKEFLAGS=%{?_smp_mflags}")
         if self.subdir:
             self._write_strip("pushd " + self.subdir)
-        self._write_strip("python3 setup.py build  " + config.extra_configure)
+
+        if len(self.cmake_srcdir):
+            self._write_strip("python3 {}setup.py build -b py3 {}".format(self.cmake_srcdir, config.extra_configure))
+            self._write_strip("popd")
+        else:
+            self._write_strip("python3 setup.py build  " + config.extra_configure)
         self._write_strip("\n")
         if self.tests_config and not config.config_opts['skip_tests']:
             self._write_strip("%check")
@@ -1176,7 +1185,10 @@ class Specfile(object):
 
         if self.subdir:
             self._write_strip("pushd " + self.subdir)
-        self._write_strip("python3 -tt setup.py build  install --root=%{buildroot}")
+        if len(self.cmake_srcdir):
+            self._write_strip("python3 -tt " +  self.name + "/setup.py build -b py3 install --root=%{buildroot}")
+        else:
+            self._write_strip("python3 -tt setup.py build  install --root=%{buildroot}")
         if self.subdir:
             self._write_strip("popd")
         self._write_strip("echo ----[ mark ]----")
